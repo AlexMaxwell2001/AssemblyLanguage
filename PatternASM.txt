@@ -1,0 +1,29 @@
+           .MODEL MEDIUM
+            .STACK 
+            .DATA 
+            .CODE 
+            .STARTUP
+            mov bl,49
+
+nextline:   mov dl,'0' ; '0' is ASCII 48
+
+nextchar:   mov ah,02h ; print ASCII char in dl
+            int 021h
+            inc dl;
+
+            cmp dl,bl ; ‘4' is ASCII 53
+            jnz nextchar
+
+            push dx    ; save value of dl and dh on stack
+            mov ah,02h ; print ASCII char in dl
+            mov dl,13  ; carriage return (move to start of line)
+            int 021h
+            mov dl,10  ; line feed (next line)
+            int 021h
+            pop dx     ; restore value in dl (and dh)
+
+            inc bl
+            cmp bl,59
+            jnz nextline 
+            .EXIT 
+END

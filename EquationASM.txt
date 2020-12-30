@@ -1,0 +1,62 @@
+.MODEL medium
+        .8087
+        .STACK 100h
+        .DATA
+        A dd 3.0; short real
+        B dd 9.0; short real
+        HY dd 0.0; short real
+        cntrl dw 03FFh 
+        stat dw 0
+        
+        .CODE
+        .STARTUP
+        FINIT         ; Set FPU to default state
+        FLDCW  cntrl;
+        FLD A ; Push SX onto FP stack
+        FMUL     ST,ST(0) ; Multiply ST*ST result on ST
+        FLD A; Push SY onto FP stack
+        FMUL     ST,ST(1) ; Multiply ST*ST
+        FLD B
+        FSQRT
+        FADD ST,ST(1)
+        
+        FSTSW   stat ; Load FPU status into ax
+        mov   ax,stat
+        and al,0BFh   ; Check all 6 status bits
+        jnz pass 
+        FSTP HY ; Copy result from stack into HY
+
+
+        mov 	bx,OFFSET HY      	;bx=[RESULT+2]+256*[RESULT+3]
+        inc 	bx
+        inc 	bx
+        mov 	ax,[bx]
+        mov 	bx,ax
+
+        mov	cx,16
+back:  	rol     bx,1    		; Rotate bx
+		jc	set		; Check MSB first
+       	mov     dl,'0'  		; If carry set dl='0'
+		jmp	over    
+set:   	mov     dl,'1'   		; If carry not set dl='1'
+over:	mov	ah,02h			; Print ASCII of dl
+		int	021h
+        loop   back    		; Repeat 16 times
+
+        mov 	bx,OFFSET HY 	;bx=[RESULT+0]+256*[RESULT+1]
+        mov 	ax,[bx]
+        mov 	bx,ax
+
+	mov	cx,16
+back1:	rol	bx,1     		; Rotate bx
+	    jc	set1			; Check MSB first
+       	mov     dl,'0'  		; If carry set dl=‘0’
+	    jmp	over1    
+set1:  	mov     dl,'1'			; If carry not set dl=‘1’
+over1:	mov	ah,02h			; Print ASCII of dl
+	    int	021h
+        loop    back1			; Repeat 16 times
+pass:   
+        .EXIT
+	
+END
